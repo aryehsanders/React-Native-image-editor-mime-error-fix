@@ -1,6 +1,6 @@
 {
   "name": "image-editor-mime-error-fix",
-  "version": "2.3.3",
+  "version": "2.3.4",
   "description": "React Native Image Editing native modules for iOS & Android - Mime Error Fixed",
   "main": "lib/ImageEditor.js",
   "typings": "typings/index.d.ts",

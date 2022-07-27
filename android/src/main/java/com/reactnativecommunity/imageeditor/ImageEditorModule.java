@@ -29,13 +29,17 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapRegionDecoder;
 import android.graphics.BitmapFactory;
+import android.graphics.ImageDecoder;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+
+import androidx.annotation.RequiresApi;
 
 import com.facebook.common.logging.FLog;
 import com.facebook.react.bridge.GuardedAsyncTask;
@@ -299,9 +303,9 @@ public class ImageEditorModule extends ReactContextBaseJavaModule {
         File tempFile = createTempFile(mContext, mimeType);
         writeCompressedBitmapToFile(cropped, mimeType, tempFile);
 
-        if (mimeType.equals("image/jpeg")) {
-          copyExif(mContext, Uri.parse(mUri), tempFile);
-        }
+//        if (mimeType.equals("image/jpeg")) {
+//          copyExif(mContext, Uri.parse(mUri), tempFile);
+//        }
 
         mPromise.resolve(Uri.fromFile(tempFile).toString());
       } catch (Exception e) {
@@ -313,20 +317,11 @@ public class ImageEditorModule extends ReactContextBaseJavaModule {
      * Reads and crops the bitmap.
      * @param outOptions Bitmap options, useful to determine {@code outMimeType}.
      */
+    @RequiresApi(api = Build.VERSION_CODES.P)
     private Bitmap crop(BitmapFactory.Options outOptions) throws IOException {
-      InputStream inputStream = openBitmapInputStream();
-      // Effeciently crops image without loading full resolution into memory
-      // https://developer.android.com/reference/android/graphics/BitmapRegionDecoder.html
-      BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(inputStream, false);
-      try {
-        Rect rect = new Rect(mX, mY, mX + mWidth, mY + mHeight);
-        return decoder.decodeRegion(rect, outOptions);
-      } finally {
-        if (inputStream != null) {
-          inputStream.close();
-        }
-        decoder.recycle();
-      }
+      ImageDecoder.Source source = ImageDecoder.createSource(mContext.getContentResolver(), Uri.parse(mUri));
+      Bitmap bitmap = ImageDecoder.decodeBitmap(source);
+      return Bitmap.createBitmap(bitmap, mX, mY, mWidth, mHeight);
     }
 
     /**
